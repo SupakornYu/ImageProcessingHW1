@@ -1,7 +1,7 @@
 import wx
 import ImageTk
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class Panel1(wx.Panel):
     """class Panel1 creates a panel with an image on it, inherits wx.Panel"""
@@ -38,7 +38,7 @@ while True:
 pgmSize = pgmComment_eachline.split()
 pgmGreyscale = file.readline().split()
 
-pgmData = []
+pgmDataList = []
 print pgmVer
 print pgmComment
 print pgmSize
@@ -48,14 +48,18 @@ for j in range(int(pgmSize[1])):
     pgmDataX = []
     for i in range(int(pgmSize[0])):
         byte = file.read(1)
-        pgmDataX.append(ord(byte))
-    pgmData.append(pgmDataX)
+        chrToInt = ord(byte)
+        pgmDataX.append(chrToInt)
+        htg[chrToInt] = htg[chrToInt]+1
+    pgmDataList.append(pgmDataX)
     """print ord(byte)"""
 file.close()
+pgmData = np.asarray(pgmDataList)
+np.set_printoptions(suppress=True)
 print pgmData
 print htg
-
-
+plt.plot(htg)
+plt.show()
 
 app = wx.App()
 # create a window/frame, no parent, -1 is default ID
