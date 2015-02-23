@@ -54,6 +54,18 @@ class ImageLib:
         pgmData = np.asarray(pgmDataList)
         return pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg
 
+    def plotHistogramFromNumpy(self,histogram_arr):
+        index = np.arange(256)
+        bar_width = 0.35
+        opacity = 0.4
+        rects1 = plt.bar(index, histogram_arr, bar_width,
+                         alpha=opacity,
+                         color='b',
+                         label='histogram1')
+        plt.xlabel('Grey level')
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
 
 
 """
@@ -95,7 +107,7 @@ print htg
 myLib = ImageLib()
 pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = myLib.readPGMImage('scaled_shapes.pgm')
 print htg
-
+myLib.plotHistogramFromNumpy(htg)
 """
 index = np.arange(256)
 bar_width = 0.35
