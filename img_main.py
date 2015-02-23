@@ -54,7 +54,7 @@ class ImageLib:
         pgmData = np.asarray(pgmDataList)
         return pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg
 
-    def plotHistogramFromNumpy(self,histogram_arr):
+    def plotHistogramFromArray(self,histogram_arr):
         index = np.arange(256)
         bar_width = 0.35
         opacity = 0.4
@@ -67,6 +67,12 @@ class ImageLib:
         plt.tight_layout()
         plt.show()
 
+    def countingObject(self,histogram,threshold_object):
+        countObject = 0
+        for itemHis in histogram:
+            if itemHis >= threshold_object:
+                countObject += 1
+        return countObject-1 # minus 1 for backgroud
 
 """
 file = open("scaled_shapes.pgm", "rb")
@@ -107,20 +113,8 @@ print htg
 myLib = ImageLib()
 pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = myLib.readPGMImage('scaled_shapes.pgm')
 print htg
-myLib.plotHistogramFromNumpy(htg)
-"""
-index = np.arange(256)
-bar_width = 0.35
-opacity = 0.4
-rects1 = plt.bar(index, htg, bar_width,
-                 alpha=opacity,
-                 color='b',
-                 label='histogram1')
-plt.xlabel('Grey level')
-plt.legend()
-plt.tight_layout()
-plt.show()
-"""
+myLib.plotHistogramFromArray(htg)
+print "object : "+ str(myLib.countingObject(htg,1000))
 
 app = wx.App()
 # create a window/frame, no parent, -1 is default ID
