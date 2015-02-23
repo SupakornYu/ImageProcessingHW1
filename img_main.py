@@ -26,6 +26,37 @@ class Panel1(wx.Panel):
         self.button1 = wx.Button(self.bitmap1, id=-1, label='Button1', pos=(8, 8))
 
 
+class ImageLib:
+    def readPGMImage(self,path):
+        file = open(path, "rb")
+        pgmVer = file.readline().split()
+        pgmComment = []
+        while True:
+            pgmComment_eachline = file.readline()
+            if(pgmComment_eachline[0]=="#"):
+                pgmComment.append(pgmComment_eachline)
+            else:
+                break
+        pgmSize = pgmComment_eachline.split()
+        pgmGreyscale = file.readline().split()
+        pgmDataList = []
+        htg = np.zeros((256))
+        np.set_printoptions(suppress=True)
+        for j in range(int(pgmSize[1])):
+            pgmDataX = []
+            for i in range(int(pgmSize[0])):
+                byte = file.read(1)
+                chrToInt = ord(byte)
+                pgmDataX.append(chrToInt)
+                htg[chrToInt] = htg[chrToInt]+1
+            pgmDataList.append(pgmDataX)
+        file.close()
+        pgmData = np.asarray(pgmDataList)
+        return pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg
+
+
+
+"""
 file = open("scaled_shapes.pgm", "rb")
 pgmVer = file.readline().split()
 pgmComment = []
@@ -43,6 +74,7 @@ print pgmVer
 print pgmComment
 print pgmSize
 print pgmGreyscale
+threshold_object = 1000
 htg = np.zeros((256))
 for j in range(int(pgmSize[1])):
     pgmDataX = []
@@ -52,14 +84,31 @@ for j in range(int(pgmSize[1])):
         pgmDataX.append(chrToInt)
         htg[chrToInt] = htg[chrToInt]+1
     pgmDataList.append(pgmDataX)
-    """print ord(byte)"""
 file.close()
 pgmData = np.asarray(pgmDataList)
 np.set_printoptions(suppress=True)
 print pgmData
 print htg
-plt.plot(htg)
+
+"""
+
+myLib = ImageLib()
+pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = myLib.readPGMImage('scaled_shapes.pgm')
+print htg
+
+"""
+index = np.arange(256)
+bar_width = 0.35
+opacity = 0.4
+rects1 = plt.bar(index, htg, bar_width,
+                 alpha=opacity,
+                 color='b',
+                 label='histogram1')
+plt.xlabel('Grey level')
+plt.legend()
+plt.tight_layout()
 plt.show()
+"""
 
 app = wx.App()
 # create a window/frame, no parent, -1 is default ID
