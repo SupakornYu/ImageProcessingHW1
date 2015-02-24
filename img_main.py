@@ -123,13 +123,52 @@ class ImageLib:
                 f.write(chr(pgmData[i][j]));
         f.close()
 
+    def histogramEqualization(self,outputFileName,inputFileName):
+        pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = ImageLib.readPGMImage(self,str(inputFileName)+".pgm")
+        print htg
+        imgArea = int(pgmSize[0])*int(pgmSize[1])
+        htgScaleAfter = np.zeros(int(pgmGreyscale[0])+1,dtype=np.int32)
+        propOfA = 0.0
+        for i in range(htg.size):
+            propOfA += float(htg[i])/float(imgArea)
+            #print "propA" + str(propOfA)
+            fDa = propOfA * float(pgmGreyscale[0])
+            htgScaleAfter[i] = round(fDa)
+        print htgScaleAfter
 
+        pgmDataAfter = np.zeros((int(pgmSize[1]),int(pgmSize[0])),dtype=np.int32)
+        for i in range(int(pgmSize[1])):
+            for j in range(int(pgmSize[0])):
+                pgmDataAfter[i][j] = htgScaleAfter[pgmData[i][j]]
+
+        print pgmData
+        print pgmDataAfter
+        ImageLib.buildPGMFile(self,outputFileName,pgmSize[0],pgmSize[1],pgmGreyscale,pgmDataAfter)
+
+
+
+
+
+
+
+"""
+#2
+myLib = ImageLib()
+myLib.histogramEqualization("EqualCameraman","Cameraman")
+myLib.histogramEqualization("EqualSEM256_256","SEM256_256")
+"""
+
+
+
+"""
+#1.1
 myLib = ImageLib()
 pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = myLib.readPGMImage('scaled_shapes.pgm')
 #myLib.buildPGMFile("test",pgmSize[0],pgmSize[1],pgmGreyscale,pgmData)
 print htg
 #monent,pgmDataMoment =  myLib.pqMoment(1,1,pgmData,pgmSize,pgmGreyscale,255)
 print "object : "+ str(myLib.countingObject(htg,1000))
+"""
 
 """
 #1.2
