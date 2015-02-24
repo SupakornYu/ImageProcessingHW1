@@ -120,12 +120,15 @@ class ImageLib:
         f.write(str(width)+" "+str(height)+"\n"+str(greyLevel[0])+"\n");
         for i in range(int(height)):
             for j in range(int(width)):
+                if pgmData[i][j]<0:
+                    pgmData[i][j] = 0
+                elif pgmData[i][j]>int(greyLevel[0]):
+                    pgmData[i][j] = int(greyLevel[0])
                 f.write(chr(pgmData[i][j]));
         f.close()
 
     def histogramEqualization(self,outputFileName,inputFileName):
         pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = ImageLib.readPGMImage(self,str(inputFileName)+".pgm")
-        print htg
         imgArea = int(pgmSize[0])*int(pgmSize[1])
         htgScaleAfter = np.zeros(int(pgmGreyscale[0])+1,dtype=np.int32)
         propOfA = 0.0
@@ -134,22 +137,35 @@ class ImageLib:
             #print "propA" + str(propOfA)
             fDa = propOfA * float(pgmGreyscale[0])
             htgScaleAfter[i] = round(fDa)
-        print htgScaleAfter
-
         pgmDataAfter = np.zeros((int(pgmSize[1]),int(pgmSize[0])),dtype=np.int32)
         for i in range(int(pgmSize[1])):
             for j in range(int(pgmSize[0])):
                 pgmDataAfter[i][j] = htgScaleAfter[pgmData[i][j]]
-
-        print pgmData
-        print pgmDataAfter
         ImageLib.buildPGMFile(self,outputFileName,pgmSize[0],pgmSize[1],pgmGreyscale,pgmDataAfter)
 
+    def geometricOperationsImage(self,redPgmFileName,greenPgmFileName,bluePgmFileName):
+        redpgmVer,redpgmComment,redpgmSize,redpgmGreyscale,redpgmData,redhtg = ImageLib.readPGMImage(self,str(redPgmFileName)+".pgm")
+        greenpgmVer,greenpgmComment,greenpgmSize,greenpgmGreyscale,greenpgmData,greenhtg = ImageLib.readPGMImage(self,str(greenPgmFileName)+".pgm")
+        bluepgmVer,bluepgmComment,bluepgmSize,bluepgmGreyscale,bluepgmData,bluehtg = ImageLib.readPGMImage(self,str(bluePgmFileName)+".pgm")
 
+        print redpgmData
+        print greenpgmData
+        print bluepgmData
 
+        geo1 = ((2*redpgmData)-greenpgmData)-bluepgmData
+        ImageLib.buildPGMFile(self,"geo1",redpgmSize[0],redpgmSize[1],redpgmGreyscale,geo1)
 
+        geo2 = (redpgmData-bluepgmData)
+        ImageLib.buildPGMFile(self,"geo2",redpgmSize[0],redpgmSize[1],redpgmGreyscale,geo2)
 
+        geo3 = (redpgmData+greenpgmData+bluepgmData)/3
+        ImageLib.buildPGMFile(self,"geo3",redpgmSize[0],redpgmSize[1],redpgmGreyscale,geo3)
 
+"""
+#3
+myLib = ImageLib()
+myLib.geometricOperationsImage("SanFranPeak_red","SanFranPeak_green","SanFranPeak_blue")
+"""
 
 """
 #2
@@ -168,6 +184,7 @@ pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = myLib.readPGMImage('scaled_
 print htg
 #monent,pgmDataMoment =  myLib.pqMoment(1,1,pgmData,pgmSize,pgmGreyscale,255)
 print "object : "+ str(myLib.countingObject(htg,1000))
+myLib.plotHistogramFromArray(htg)
 """
 
 """
