@@ -82,7 +82,10 @@ class ImageLib:
         countObjectGreyLevel.remove(max(countObjectGreyLevel))
         return countObject-1,countObjectGreyLevel # minus 1 for backgroud
 
-    def pqMoment(self,p,q,pqmData,pgmSize,greyLevel,greyLevelSelected):
+    #def buildPGMInterestObject(self,inputFileName):
+
+
+    def pqMoment(self,p,q,pgmData,pgmSize,greyLevel,greyLevelSelected):
         moment = 0
         pgmDataMoment = np.zeros((int(pgmSize[1]),int(pgmSize[0])), dtype=np.int32)
         for i in range(int(pgmSize[1])):
@@ -102,6 +105,8 @@ class ImageLib:
         moment3,pgmDataMoment = ImageLib.pqMoment(self,0,0,pgmData,pgmSize,greyLevel,greyLevelSelected)
         xCoor = moment1/moment3
         yCoor = moment2/moment3
+        print "Central of Mass x : " + str(xCoor)
+        print "Central of Mass y : " + str(yCoor)
         for i in range(int(pgmSize[1])):
             for j in range(int(pgmSize[0])):
                 centralMoment += ((math.pow((j-xCoor),p))*((math.pow(i-yCoor,q))*pgmDataMoment[i][j]))
@@ -130,6 +135,7 @@ class ImageLib:
 
     def histogramEqualization(self,outputFileName,inputFileName):
         pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = ImageLib.readPGMImage(self,str(inputFileName)+".pgm")
+        ImageLib.plotHistogramFromArray(self,htg)
         imgArea = int(pgmSize[0])*int(pgmSize[1])
         htgScaleAfter = np.zeros(int(pgmGreyscale[0])+1,dtype=np.int32)
         propOfA = 0.0
@@ -143,6 +149,8 @@ class ImageLib:
             for j in range(int(pgmSize[0])):
                 pgmDataAfter[i][j] = htgScaleAfter[pgmData[i][j]]
         ImageLib.buildPGMFile(self,outputFileName,pgmSize[0],pgmSize[1],pgmGreyscale,pgmDataAfter)
+        pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = ImageLib.readPGMImage(self,str(outputFileName)+".pgm")
+        ImageLib.plotHistogramFromArray(self,htg)
 
     def geometricOperationsImage(self,redPgmFileName,greenPgmFileName,bluePgmFileName):
         redpgmVer,redpgmComment,redpgmSize,redpgmGreyscale,redpgmData,redhtg = ImageLib.readPGMImage(self,str(redPgmFileName)+".pgm")
@@ -161,6 +169,11 @@ class ImageLib:
 
         geo3 = (redpgmData+greenpgmData+bluepgmData)/3
         ImageLib.buildPGMFile(self,"geo3",redpgmSize[0],redpgmSize[1],redpgmGreyscale,geo3)
+
+        geo4 = (((redpgmData+greenpgmData)/2)+2*bluepgmData)/3 #my own option
+        ImageLib.buildPGMFile(self,"geo4",redpgmSize[0],redpgmSize[1],redpgmGreyscale,geo4)
+
+
 
     def convolutionWithKernel(self,inputFileName,kernel):
         pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = ImageLib.readPGMImage(self,str(inputFileName)+".pgm")
@@ -189,7 +202,6 @@ class ImageLib:
         for i in range(15,int(pgmSize[1]),16):
             pgmDataCon[255][i] = 160
             pgmDataCon[i][255] = 160
-
 
 
         ImageLib.buildPGMFile(self,str(inputFileName)+"Con",pgmSize[0],pgmSize[1],pgmGreyscale,pgmDataCon)
@@ -261,6 +273,9 @@ class ImageLib:
                     """
         ImageLib.buildPGMFile(self,str(badPictureFileName)+"fix",pgmSize[0],pgmSize[1],pgmGreyscale,pgmFixedPicture)
 
+
+
+"""
 #4
 myLib = ImageLib()
 #myLib.readJsonPixelPosition("disgrid.json")
@@ -269,21 +284,25 @@ print kernel
 #np.set_printoptions(threshold=np.nan)
 pgmDataCon,pgmCon = myLib.convolutionWithKernel("grid",kernel)
 
-print np.amax(pgmCon) #find max value
-print np.unique(pgmDataCon) #find number
+#print np.amax(pgmCon) #find max value
+#print np.unique(pgmDataCon) #find number
 #np.set_printoptions(threshold=np.nan)
-print pgmDataCon
-print pgmCon
+#print pgmDataCon
+#print pgmCon
 
 normalGridPosition = myLib.findPixelPosition(pgmDataCon,256,256)
 unNormalGridPosition = myLib.readJsonPixelPosition("disgrid.json")
-print normalGridPosition
-print unNormalGridPosition[255]['x2']
-print normalGridPosition[255]['x2']
+
+#print normalGridPosition
+#print unNormalGridPosition[255]['x2']
+#print normalGridPosition[255]['x2']
+
 xWeight,yWeight =  myLib.findWeight(normalGridPosition,unNormalGridPosition)
-print xWeight
-print yWeight
+#print xWeight
+#print yWeight
 myLib.fixBadPicture(xWeight,yWeight,"distgrid",normalGridPosition)
+
+"""
 
 """
 #3
@@ -313,8 +332,11 @@ myLib.plotHistogramFromArray(htg)
 
 """
 #1.2
-print myLib.centralMoment(2,0,pgmData,pgmSize,pgmGreyscale,80)
-print myLib.scaleInvariantMoment(2,0,pgmData,pgmSize,pgmGreyscale,80)+myLib.scaleInvariantMoment(0,2,pgmData,pgmSize,pgmGreyscale,80)
+myLib = ImageLib()
+pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = myLib.readPGMImage('scaled_shapes.pgm')
+print myLib.pqMoment(0,2,pgmData,pgmSize,pgmGreyscale,200) #return pq-moment
+print myLib.centralMoment(0,2,pgmData,pgmSize,pgmGreyscale,200) #return central moment
+print myLib.scaleInvariantMoment(2,0,pgmData,pgmSize,pgmGreyscale,200)+myLib.scaleInvariantMoment(0,2,pgmData,pgmSize,pgmGreyscale,200)
 """
 
 
