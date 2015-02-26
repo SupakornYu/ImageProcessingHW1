@@ -3,6 +3,7 @@ import wx
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import json
 
 class Panel1(wx.Panel):
     """class Panel1 creates a panel with an image on it, inherits wx.Panel"""
@@ -160,6 +161,129 @@ class ImageLib:
 
         geo3 = (redpgmData+greenpgmData+bluepgmData)/3
         ImageLib.buildPGMFile(self,"geo3",redpgmSize[0],redpgmSize[1],redpgmGreyscale,geo3)
+
+    def convolutionWithKernel(self,inputFileName,kernel):
+        pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = ImageLib.readPGMImage(self,str(inputFileName)+".pgm")
+        pgmDataCon = np.zeros((int(pgmSize[1]),int(pgmSize[0])),dtype=np.int32)
+        pgmDataCon.fill(255)
+        #print pgmData
+        for i in range(1,int(pgmSize[1])-1):
+            for j in range(1,int(pgmSize[0])-1):
+                temp = 0
+                #XYY
+                #YYY
+                #YYY
+                temp += pgmData[i][j]*kernel[1][1]
+                temp += pgmData[i-1][j-1]*kernel[0][0]
+                temp += pgmData[i-1][j]*kernel[0][1]
+                temp += pgmData[i+1][j+1]*kernel[2][2]
+                temp += pgmData[i][j-1]*kernel[1][0]
+                temp += pgmData[i][j+1]*kernel[1][2]
+                temp += pgmData[i+1][j-1]*kernel[2][0]
+                temp += pgmData[i+1][j]*kernel[2][1]
+                temp += pgmData[i+1][j+1]*kernel[2][2]
+                pgmDataCon[i][j] = temp
+        pgmCon = np.array(pgmDataCon)
+
+        #extend grid
+        for i in range(15,int(pgmSize[1]),16):
+            pgmDataCon[255][i] = 160
+            pgmDataCon[i][255] = 160
+
+
+
+        ImageLib.buildPGMFile(self,str(inputFileName)+"Con",pgmSize[0],pgmSize[1],pgmGreyscale,pgmDataCon)
+        return pgmDataCon,pgmCon
+
+
+    def readJsonPixelPosition(self,fileName):
+        json_data=open(fileName)
+        data = json.load(json_data)
+        json_data.close()
+        #print data[0]["y"+str(4)]
+        return data
+
+    def findPixelPosition(self,convoluteArr,width,height):
+        normalGridPosition = []
+        count = 0
+        for i in range(height):
+            for j in range(width):
+                if(convoluteArr[i][j]==160):
+                    dict = {'u': count,'x1': j-15,'y1': i-15,'x2':j,'y2': i-15,'x3': j-15,'y3': i,'x4': j,'y4': i}
+                    normalGridPosition.append(dict)
+                    count +=1
+        return normalGridPosition
+
+    def findWeight(self,goodGrid,badGrid):
+        xWeight = []
+        yWeight = []
+        for i in range(256):
+            a = np.array([[ goodGrid[i]['x1'],goodGrid[i]['y1'],goodGrid[i]['x1']*goodGrid[i]['y1'],1 ],[ goodGrid[i]['x2'],goodGrid[i]['y2'],goodGrid[i]['x2']*goodGrid[i]['y2'],1 ],[ goodGrid[i]['x3'],goodGrid[i]['y3'],goodGrid[i]['x3']*goodGrid[i]['y3'],1 ],[ goodGrid[i]['x4'],goodGrid[i]['y4'],goodGrid[i]['x4']*goodGrid[i]['y4'],1 ]])
+            b = np.array([badGrid[i]['x1'],badGrid[i]['x2'],badGrid[i]['x3'],badGrid[i]['x4']])
+            x = np.linalg.solve(a, b)
+            xWeight.append(x)
+            a = np.array([[ goodGrid[i]['x1'],goodGrid[i]['y1'],goodGrid[i]['x1']*goodGrid[i]['y1'],1 ],[ goodGrid[i]['x2'],goodGrid[i]['y2'],goodGrid[i]['x2']*goodGrid[i]['y2'],1 ],[ goodGrid[i]['x3'],goodGrid[i]['y3'],goodGrid[i]['x3']*goodGrid[i]['y3'],1 ],[ goodGrid[i]['x4'],goodGrid[i]['y4'],goodGrid[i]['x4']*goodGrid[i]['y4'],1 ]])
+            b = np.array([badGrid[i]['y1'],badGrid[i]['y2'],badGrid[i]['y3'],badGrid[i]['y4']])
+            y = np.linalg.solve(a, b)
+            yWeight.append(y)
+        return xWeight,yWeight
+
+    def fixBadPicture(self,xWeight,yWeight,badPictureFileName,goodGrid):
+        pgmVer,pgmComment,pgmSize,pgmGreyscale,pgmData,htg = ImageLib.readPGMImage(self,str(badPictureFileName)+".pgm")
+        pgmFixedPicture = np.zeros((int(pgmSize[1]),int(pgmSize[0])), dtype=np.int32)
+        for k in goodGrid:
+            #print k
+            for i in range(k['y1'],k['y4']+1):
+                for j in range(k['x1'],k['x4']+1):
+                    xAxis = round((xWeight[k['u']][0]*j) + (xWeight[k['u']][1]*i) + (xWeight[k['u']][2]*i*j) + (xWeight[k['u']][3]),1)
+                    yAxis = round((yWeight[k['u']][0]*j) + (yWeight[k['u']][1]*i) + (yWeight[k['u']][2]*i*j) + (yWeight[k['u']][3]),1)
+
+                    """
+                    if xAxis >=255 or yAxis >=255:
+                        xAxis = 255
+                        yAxis = 255
+                        print "over"
+                    elif xAxis <=0 or yAxis <=0:
+                        xAxis = 0
+                        yAxis = 0
+                        print "less"
+                    """
+                    pgmFixedPicture[i][j] = pgmData[yAxis][xAxis]
+
+                    """
+                    print "i " + str(i)
+                    print "j " + str(j)
+                    print "x " + str(xAxis)
+                    print "y " + str(yAxis)
+                    print "xW " + str(xWeight[k['u']])
+                    print "yW " + str(yWeight[k['u']])
+                    print "u " + str(k['u'])
+                    """
+        ImageLib.buildPGMFile(self,str(badPictureFileName)+"fix",pgmSize[0],pgmSize[1],pgmGreyscale,pgmFixedPicture)
+
+#4
+myLib = ImageLib()
+#myLib.readJsonPixelPosition("disgrid.json")
+kernel = np.array([[0,1,0],[1,1,1],[0,1,0]])
+print kernel
+#np.set_printoptions(threshold=np.nan)
+pgmDataCon,pgmCon = myLib.convolutionWithKernel("grid",kernel)
+
+print np.amax(pgmCon) #find max value
+print np.unique(pgmDataCon) #find number
+#np.set_printoptions(threshold=np.nan)
+print pgmDataCon
+print pgmCon
+
+normalGridPosition = myLib.findPixelPosition(pgmDataCon,256,256)
+unNormalGridPosition = myLib.readJsonPixelPosition("disgrid.json")
+print normalGridPosition
+print unNormalGridPosition[255]['x2']
+print normalGridPosition[255]['x2']
+xWeight,yWeight =  myLib.findWeight(normalGridPosition,unNormalGridPosition)
+print xWeight
+print yWeight
+myLib.fixBadPicture(xWeight,yWeight,"distgrid",normalGridPosition)
 
 """
 #3
